@@ -4,14 +4,17 @@ import android.util.Base64
 import java.io.InputStream
 import java.net.URL
 import java.net.URLConnection
-import android.util.JsonReader
 
-import android.util.JsonToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.IOException
+import org.json.JSONObject
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
+import org.json.JSONException
+import java.io.BufferedReader
+import java.io.IOException
+import java.lang.StringBuilder
+
 
 const val BASE_API_URL = "https://api.track.toggl.com/api/v8/"
 
@@ -19,7 +22,7 @@ const val BASE_API_URL = "https://api.track.toggl.com/api/v8/"
 class TooglWebAPI(val apiToken: String?) {
 
 
-    suspend fun getProjectsList(): Int? {
+    suspend fun getProjectsList(): JSONObject? {
         // Connecting to toggl API
         return withContext(Dispatchers.IO) {
 
@@ -37,28 +40,52 @@ class TooglWebAPI(val apiToken: String?) {
             val inputStream: InputStream = urlConnection.getInputStream()
 
 
-            @Throws(IOException::class)
-            fun readJsonStream(`in`: InputStream?): Int? {
-                val reader = JsonReader(InputStreamReader(`in`, "UTF-8"))
-                try {
-                    var since: Int = -1
-                    reader.beginObject()
-                    while (reader.hasNext()) {
-                        val name = reader.nextName()
-                        if (name == "since") {
-                            since = reader.nextInt()
-                        } else {
-                            reader.skipValue()
-                        }
-                    }
-                    reader.endObject()
-                    return since
-                } finally {
-                    reader.close()
-                }
-            }
+            try {
+                val streamReader = BufferedReader(InputStreamReader(inputStream, "UTF-8"))
+                val responseStrBuilder = StringBuilder()
+                var inputStr: String?
+                while (streamReader.readLine()
+                        .also { inputStr = it } != null
+                ) responseStrBuilder.append(inputStr)
 
-            return@withContext readJsonStream(inputStream)
+                //returns the json object
+                return@withContext JSONObject(responseStrBuilder.toString())
+            } catch (e: IOException) {
+                e.printStackTrace()
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+            //if something went wrong, return null
+            return@withContext null
+
+//            val jsonParser = JSONParser();
+//            val jsonObject:JSONObject = jsonParser.parse(InputStreamReader(inputStream, "UTF-8")) as JSONObject
+
+
+
+//            @Throws(IOException::class)
+//            fun readJsonStream(`in`: InputStream?): Int? {
+//                val reader = JsonReader(InputStreamReader(`in`, "UTF-8"))
+//                try {
+//                    var since: Int = -1
+//                    reader.beginObject()
+//                    while (reader.hasNext()) {
+//                        val name = reader.nextName()
+//                        if (name == "since") {
+//                            since = reader.nextInt()
+//                        } else {
+//                            reader.skipValue()
+//                        }
+//                    }
+//                    reader.endObject()
+//                    return since
+//                } finally {
+//                    reader.close()
+//                }
+//            }
+//
+//            return@withContext readJsonStream(inputStream)
+//            return@withContext jsonObject
         }
 //        @Throws(IOException::class)
 //        fun readMessagesArray(reader: JsonReader): List<Message?>? {

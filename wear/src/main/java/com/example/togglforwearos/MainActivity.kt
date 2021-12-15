@@ -3,7 +3,6 @@ package com.example.togglforwearos
 import android.app.Activity
 import android.content.Context
 import android.os.Bundle
-import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -48,13 +47,18 @@ class MainActivity : Activity() {
 
 
 
+
+
         //
         scope.launch {
             val tooglWebAPI = TooglWebAPI(togglAPIToken)
-            textView.text = tooglWebAPI.getProjectsList().toString()
+            textView.text = tooglWebAPI.getCurrentTimeEntry().toString()
         }
 
     }
 
-    
+
+    fun getAndStoreUserData(){
+
+    }
 }

@@ -8,17 +8,32 @@
     tools:context=".MainActivity"
     tools:deviceIds="wear">
 
-    <FrameLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:orientation="vertical"
         android:padding="@dimen/inner_frame_layout_padding"
         app:layout_boxedEdges="all">
 
         <TextView
-            android:id="@+id/text"
+            android:id="@+id/textView1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/hello_world" />
 
-    </FrameLayout>
+        <EditText
+            android:id="@+id/editTextAPIToken"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="text"
+            android:text="API token" />
+
+        <Button
+            android:id="@+id/buttonAPIToken"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Save token" />
+
+    </LinearLayout>
 </androidx.wear.widget.BoxInsetLayout>

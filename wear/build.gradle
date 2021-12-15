@@ -44,4 +44,8 @@ dependencies {
 
     // Use to fetch tiles from a tile provider in your tests
     testImplementation("androidx.wear.tiles:tiles-testing:1.0.0")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9")
+
+    api 'com.google.guava:guava:31.0.1-android'
 }

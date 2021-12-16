@@ -71,9 +71,7 @@ class ProgressTileService : TileService() {
         // Retrieves device parameters to later retrieve font styles for any text in the Tile.
         val deviceParams = requestParams.deviceParameters!!
 
-        val sharedPref = PreferenceManager.getDefaultSharedPreferences(
-            applicationContext
-        )
+        val sharedPref = getSharedPref(applicationContext)
         var togglAPIToken: String = sharedPref.getString(API_TOKEN_KEY, null)!!
         val timeEntries = UserInfo(TooglWebAPI(togglAPIToken).getUserData()!!).timeEntries
         // Creates Tile.

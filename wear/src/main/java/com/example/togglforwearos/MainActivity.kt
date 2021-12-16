@@ -49,7 +49,7 @@ class MainActivity : Activity() {
         val textView: TextView = findViewById(R.id.textView1)
 
         // Managing API token
-        val sharedPref = getSharedPref()
+        val sharedPref = getSharedPref(applicationContext)
         var togglAPIToken: String? = sharedPref.getString(API_TOKEN_KEY, null)
 
         val editTextAPIToken: EditText = findViewById(R.id.editTextAPIToken)
@@ -123,7 +123,7 @@ class MainActivity : Activity() {
 
     //
     fun getAndStoreUserData(togglAPIToken: String?){
-        val sharedPref = getSharedPref()
+        val sharedPref = getSharedPref(applicationContext)
         var userInfoString: String? = sharedPref.getString(USER_INFO_KEY, null)
         if(userInfoString != null){
             userInfo = UserInfo(JSONObject(userInfoString))
@@ -141,13 +141,6 @@ class MainActivity : Activity() {
                 }
             }
         }
-    }
-
-
-    fun getSharedPref(): SharedPreferences {
-        return PreferenceManager.getDefaultSharedPreferences(
-            applicationContext
-        )!!
     }
 
 

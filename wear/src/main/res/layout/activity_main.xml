@@ -34,6 +34,11 @@
                     android:text="@string/hello_world"
                     android:textAppearance="@android:style/TextAppearance.Material.Medium" />
 
+                <View
+                    android:id="@+id/view"
+                    android:layout_width="match_parent"
+                    android:layout_height="24dp" />
+
                 <EditText
                     android:id="@+id/editTextAPIToken"
                     android:layout_width="match_parent"

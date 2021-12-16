@@ -38,7 +38,7 @@
         </activity>
 
         <service
-            android:name=".MyTileService"
+            android:name=".ProgressTileService"
             android:label="@string/tile_label"
             android:description="@string/tile_description"
             android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">

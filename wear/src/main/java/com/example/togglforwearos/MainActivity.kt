@@ -3,6 +3,8 @@ package com.example.togglforwearos
 import android.app.Activity
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -13,6 +15,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAccessor
+import java.util.*
+import kotlin.math.min
 
 // Shared preferences keys
 const val API_TOKEN_KEY = "api token key"
@@ -56,20 +66,50 @@ class MainActivity : Activity() {
         getAndStoreUserData(togglAPIToken)
 
 
-
-
         if(togglAPIToken != null && userInfo != null) {
             scope.launch {
                 val tooglWebAPI = TooglWebAPI(togglAPIToken!!)
-                val currentProject = userInfo!!.projectsMap[tooglWebAPI.getCurrentTimeEntry()?.getJSONObject("data")?.getString("pid")]
+                val runningTimeEntry = tooglWebAPI.getCurrentTimeEntry()
+                val currentProject = userInfo!!.projectsMap[runningTimeEntry?.getJSONObject("data")?.getString("pid")]
                 if(currentProject != null) {
-                    textView.text = currentProject.name
+                    val timeEntryStartTimestamp = runningTimeEntry!!.getJSONObject("data").getString("start")
+                    val diff: Duration = Duration.between(convertStringToInstant(timeEntryStartTimestamp), Instant.now())
+                    textView.text = "${currentProject.name} ${convertDurationToString(diff)}"
                     textView.setBackgroundColor(currentProject.color)
                 }
             }
         }
+
     }
 
+
+    fun convertDurationToString(indiff: Duration): String{
+        var diff = indiff
+        fun getSubstringBetween(string: String, start: String, end: String): String{
+            return string.split(start)[1].split(end)[0]
+        }
+//        val diffString = diff.toString()
+//        val seconds = getSubstringBetween(diffString, "M", ".")
+//        val minutes = getSubstringBetween(diffString, "H", "M")
+//        val hours = getSubstringBetween(diffString, "T", "H")
+        val days = diff.toDays()
+        diff = diff.minusDays(days)
+        val hours = diff.toHours()
+        diff = diff.minusHours(hours)
+        val minutes = diff.toMinutes()
+        diff = diff.minusMinutes(minutes)
+        val seconds = getSubstringBetween(diff.toString(), "PT", ".")
+        return if(diff.toHours() == 0L){
+            "$minutes:$seconds"
+        }else{
+            "$hours:$minutes:$seconds"
+        }
+    }
+
+
+    fun convertStringToInstant(string: String): Instant{
+        return OffsetDateTime.parse(string).toInstant()
+    }
 
     //
     fun getAndStoreUserData(togglAPIToken: String?){

@@ -33,7 +33,6 @@ class MainActivity : Activity() {
         setContentView(binding.root)
 
         val textView: TextView = findViewById(R.id.textView1)
-        textView.text = "test"
 
         // Managing API token
         val sharedPref = this.getPreferences(Context.MODE_PRIVATE) ?: return
@@ -84,7 +83,6 @@ class MainActivity : Activity() {
             if(togglAPIToken != null) {
                 val newUserInfoJSONObject = TooglWebAPI(togglAPIToken).getUserData()
                 if(newUserInfoJSONObject != null && newUserInfoJSONObject.toString() != userInfoString){
-                    showToast(newUserInfoJSONObject.toString())
                     userInfo = UserInfo(newUserInfoJSONObject)
                     with (sharedPref.edit()) {
                         putString(USER_INFO_KEY, userInfo?.json.toString())

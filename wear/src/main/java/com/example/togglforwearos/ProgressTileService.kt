@@ -151,7 +151,8 @@ class ProgressTileService : TileService() {
         timeEntries: List<TimeEntry>,
         trackedDurationSeconds: Long,
         totalArcLengthDegrees: Float,
-        thickness: DimensionBuilders.DpProp
+        thickness: DimensionBuilders.DpProp = dp(12f),
+        endEpoch: Long = Instant.now().epochSecond
     ): LayoutElementBuilders.Arc {
         if (totalArcLengthDegrees < 0f || totalArcLengthDegrees > 360f) {
             throw Exception("totalArcLengthDegrees can't be less than 0 or more than 360")
@@ -169,6 +170,11 @@ class ProgressTileService : TileService() {
         } else {
             inputStartEpoch
         }
+        fun getActualEndEpoch(inputEndEpoch: Long): Long = if (endEpoch > inputEndEpoch) {
+            inputEndEpoch
+        } else {
+            endEpoch
+        }
 
         var builder = LayoutElementBuilders.Arc.Builder()
             .setAnchorAngle(DimensionBuilders.degrees(-totalArcLengthDegrees / 2))
@@ -181,7 +187,12 @@ class ProgressTileService : TileService() {
         var previousEntryEndTimeEpoch: Long = startEpoch
         for (i in 0..(sortedTimeEmtries.size - 1)) {
             val timeEntry = sortedTimeEmtries[i]
-            if (timeEntry.startTimeEpoch + timeEntry.durationSeconds >= startEpoch) {
+            if(timeEntry.isCurrentlyRunning){
+                timeEntry.endTimeEpoch = epochNow
+            }
+            if ((timeEntry.startTimeEpoch >= startEpoch && timeEntry.endTimeEpoch!! <= endEpoch) ||
+                (timeEntry.startTimeEpoch < startEpoch && timeEntry.endTimeEpoch!! > startEpoch) ||
+                (timeEntry.startTimeEpoch < endEpoch && timeEntry.endTimeEpoch!! > endEpoch)    ){
                 var actualStartEpoch = getActualStartEpoch(timeEntry.startTimeEpoch)
                 if (actualStartEpoch > previousEntryEndTimeEpoch) {
                     // Adding filler ArcLine
@@ -200,21 +211,16 @@ class ProgressTileService : TileService() {
                     )
                 }
 
-                var actualEndEpoch: Long = 0
+
+                var actualEndEpoch: Long = getActualEndEpoch(timeEntry.endTimeEpoch!!)
                 if (i < sortedTimeEmtries.size - 1) {
                     val nextEntry = sortedTimeEmtries[i + 1]
-                    actualEndEpoch = if (nextEntry.startTimeEpoch >= timeEntry.endTimeEpoch) {
-                        timeEntry.endTimeEpoch
-                    } else {
-                        nextEntry.startTimeEpoch
+
+                    if (nextEntry.startTimeEpoch < actualEndEpoch) {
+                        actualEndEpoch = nextEntry.startTimeEpoch
                     }
-                } else {
-                    actualEndEpoch =
-                        if (epochNow >= timeEntry.endTimeEpoch) {
-                            timeEntry.endTimeEpoch
-                        } else {
-                            epochNow
-                        }
+                }else{
+                    val debug = 0
                 }
                 builder.addContent(
                     LayoutElementBuilders.ArcLine.Builder()

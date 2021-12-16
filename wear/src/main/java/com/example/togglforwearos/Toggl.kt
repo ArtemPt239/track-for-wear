@@ -47,13 +47,14 @@ class Project(val json: JSONObject){
 class TimeEntry(val json: JSONObject, val projectColor: Int): Comparable<TimeEntry>{
     var durationSeconds: Long = json.getString("duration").toLong()
     var startTimeEpoch: Long = convertStringToInstant(json.getString("start")).epochSecond
-
+    val isCurrentlyRunning: Boolean = !json.has("stop")
+    var endTimeEpoch: Long? = null
     init {
-        if(!json.has("stop")){
-            durationSeconds += startTimeEpoch
+        if(!isCurrentlyRunning){
+            endTimeEpoch = startTimeEpoch + durationSeconds
         }
     }
-    var endTimeEpoch: Long = startTimeEpoch + durationSeconds
+
 
     override operator fun compareTo(other: TimeEntry): Int {
         if (this.startTimeEpoch > other.startTimeEpoch) return 1

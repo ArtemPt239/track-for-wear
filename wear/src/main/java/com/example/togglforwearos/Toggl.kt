@@ -2,6 +2,7 @@ package com.example.togglforwearos
 
 import android.graphics.Color
 import org.json.JSONObject
+import java.time.Duration
 
 //data class UserInfo(var timeEntries: List<TimeEntry>,
 //                    var projects: List<Project>)
@@ -13,9 +14,10 @@ import org.json.JSONObject
 //                     var duration: java.time.Duration,
 //                     var project:Project)
 
-class UserInfo(var json: JSONObject){
+class UserInfo(val json: JSONObject){
     var projectsMap: MutableMap<String, Project> = mutableMapOf()
     var projects: MutableList<Project> = mutableListOf()
+    var timeEntries: MutableList<TimeEntry> = mutableListOf()
     init {
         val projects_array = json.getJSONObject("data").getJSONArray("projects")
         for (i in 0..(projects_array.length()-1)){
@@ -23,13 +25,40 @@ class UserInfo(var json: JSONObject){
             projectsMap.put(project.getString("id"), Project(project))
             projects.add(Project(project))
         }
+        val timeEntriesArray = json.getJSONObject("data").getJSONArray("time_entries")
+        for (i in 0..(timeEntriesArray.length()-1)){
+            val timeEntry = timeEntriesArray.getJSONObject(i)
+            var timeEntryColor = Color.BLACK
+            if(timeEntry.has("pid")){
+                timeEntryColor = projectsMap[timeEntry.getString("pid")]!!.color
+            }
+            timeEntries.add(TimeEntry(timeEntry, timeEntryColor))
+        }
     }
 
 
 }
 
-class Project(var json: JSONObject){
+class Project(val json: JSONObject){
     val name = json.getString("name")
     val color: Int = Color.parseColor(json.getString("hex_color"))
+}
+
+class TimeEntry(val json: JSONObject, val projectColor: Int): Comparable<TimeEntry>{
+    var durationSeconds: Long = json.getString("duration").toLong()
+    var startTimeEpoch: Long = convertStringToInstant(json.getString("start")).epochSecond
+
+    init {
+        if(!json.has("stop")){
+            durationSeconds += startTimeEpoch
+        }
+    }
+    var endTimeEpoch: Long = startTimeEpoch + durationSeconds
+
+    override operator fun compareTo(other: TimeEntry): Int {
+        if (this.startTimeEpoch > other.startTimeEpoch) return 1
+        if (this.startTimeEpoch < other.startTimeEpoch) return -1
+        return 0
+    }
 }
 

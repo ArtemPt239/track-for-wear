@@ -8,10 +8,12 @@ This project is still in development.
 
 Current features:
 - Ability to see currently running timer on your watch.
+- Tile with the following functionality:
+    - Ability to see your resent timeline for a quick review of your day
 Planned features:
-- Ability to see your resent timeline for a quick review of your day
-- Beautiful tile with the above features
+- Ability to see current timer on the tile
 - Ability to start timers from the complications?
+- Pomodoro notifications: pinging user after entities of some projects were running for some time (specified for each project) (only active for projects, selected by user)
 
 # System requirements
 This app targets api level 28 (Android 9/WearOS 2.2) and above

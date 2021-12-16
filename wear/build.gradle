@@ -48,6 +48,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0-RC2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.4.3")
 
+    implementation 'androidx.preference:preference-ktx:1.1.1'
+
     // Guava <З
     api 'com.google.guava:guava:31.0.1-android'
 }

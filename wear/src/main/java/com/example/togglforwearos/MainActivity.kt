@@ -2,7 +2,10 @@ package com.example.togglforwearos
 
 import android.app.Activity
 import android.content.Context
+import android.content.SharedPreferences
+import android.graphics.Color
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -14,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import org.json.JSONException
 import org.json.JSONObject
 import java.time.Duration
 import java.time.Instant
@@ -45,7 +49,7 @@ class MainActivity : Activity() {
         val textView: TextView = findViewById(R.id.textView1)
 
         // Managing API token
-        val sharedPref = this.getPreferences(Context.MODE_PRIVATE) ?: return
+        val sharedPref = getSharedPref()
         var togglAPIToken: String? = sharedPref.getString(API_TOKEN_KEY, null)
 
         val editTextAPIToken: EditText = findViewById(R.id.editTextAPIToken)
@@ -70,12 +74,23 @@ class MainActivity : Activity() {
             scope.launch {
                 val tooglWebAPI = TooglWebAPI(togglAPIToken!!)
                 val runningTimeEntry = tooglWebAPI.getCurrentTimeEntry()
-                val currentProject = userInfo!!.projectsMap[runningTimeEntry?.getJSONObject("data")?.getString("pid")]
-                if(currentProject != null) {
-                    val timeEntryStartTimestamp = runningTimeEntry!!.getJSONObject("data").getString("start")
-                    val diff: Duration = Duration.between(convertStringToInstant(timeEntryStartTimestamp), Instant.now())
-                    textView.text = "${currentProject.name} ${convertDurationToString(diff)}"
-                    textView.setBackgroundColor(currentProject.color)
+                try {
+                    val currentProject =
+                        userInfo!!.projectsMap[runningTimeEntry?.getJSONObject("data")
+                            ?.getString("pid")]
+                    if (currentProject != null) {
+                        val timeEntryStartTimestamp =
+                            runningTimeEntry!!.getJSONObject("data").getString("start")
+                        val diff: Duration = Duration.between(
+                            convertStringToInstant(timeEntryStartTimestamp),
+                            Instant.now()
+                        )
+                        textView.text = "${currentProject.name} ${convertDurationToString(diff)}"
+                        textView.setBackgroundColor(currentProject.color)
+                    }
+                }catch (e: JSONException){
+                    textView.text = resources.getString(R.string.no_current_timer)
+                    textView.setBackgroundColor(Color.BLACK)
                 }
             }
         }
@@ -88,17 +103,16 @@ class MainActivity : Activity() {
         fun getSubstringBetween(string: String, start: String, end: String): String{
             return string.split(start)[1].split(end)[0]
         }
-//        val diffString = diff.toString()
-//        val seconds = getSubstringBetween(diffString, "M", ".")
-//        val minutes = getSubstringBetween(diffString, "H", "M")
-//        val hours = getSubstringBetween(diffString, "T", "H")
         val days = diff.toDays()
         diff = diff.minusDays(days)
         val hours = diff.toHours()
         diff = diff.minusHours(hours)
         val minutes = diff.toMinutes()
         diff = diff.minusMinutes(minutes)
-        val seconds = getSubstringBetween(diff.toString(), "PT", ".")
+        var seconds = getSubstringBetween(diff.toString(), "PT", ".")
+        if (seconds.length == 1){
+            seconds = "0$seconds"
+        }
         return if(diff.toHours() == 0L){
             "$minutes:$seconds"
         }else{
@@ -107,13 +121,9 @@ class MainActivity : Activity() {
     }
 
 
-    fun convertStringToInstant(string: String): Instant{
-        return OffsetDateTime.parse(string).toInstant()
-    }
-
     //
     fun getAndStoreUserData(togglAPIToken: String?){
-        val sharedPref = this.getPreferences(Context.MODE_PRIVATE) ?: return
+        val sharedPref = getSharedPref()
         var userInfoString: String? = sharedPref.getString(USER_INFO_KEY, null)
         if(userInfoString != null){
             userInfo = UserInfo(JSONObject(userInfoString))
@@ -131,6 +141,13 @@ class MainActivity : Activity() {
                 }
             }
         }
+    }
+
+
+    fun getSharedPref(): SharedPreferences {
+        return PreferenceManager.getDefaultSharedPreferences(
+            applicationContext
+        )!!
     }
 
 

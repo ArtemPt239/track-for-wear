@@ -5,7 +5,7 @@ This project aims to fix this!
 
 # Screenshots
 
-![image](pictures/pic_0.png)
+<img src="pictures/pic_1.png" alt="drawing" width="100"/>
 
 ![image](pictures/pic_1.png)
 

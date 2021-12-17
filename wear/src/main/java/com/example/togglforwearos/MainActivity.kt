@@ -79,13 +79,9 @@ class MainActivity : Activity() {
                         userInfo!!.projectsMap[runningTimeEntry?.getJSONObject("data")
                             ?.getString("pid")]
                     if (currentProject != null) {
-                        val timeEntryStartTimestamp =
-                            runningTimeEntry!!.getJSONObject("data").getString("start")
-                        val diff: Duration = Duration.between(
-                            convertStringToInstant(timeEntryStartTimestamp),
-                            Instant.now()
-                        )
-                        textView.text = "${currentProject.name} ${convertDurationToString(diff)}"
+                        val runningTimeEntry = TimeEntry(runningTimeEntry!!.getJSONObject("data"), currentProject)
+
+                        textView.text = "${runningTimeEntry.projectName} ${durationSecondsToString(Instant.now().epochSecond - runningTimeEntry.startTimeEpoch)}"
                         textView.setBackgroundColor(currentProject.color)
                     }
                 }catch (e: JSONException){

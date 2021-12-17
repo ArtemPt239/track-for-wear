@@ -2,7 +2,6 @@ package com.example.togglforwearos
 
 import android.graphics.Color
 import org.json.JSONObject
-import java.time.Duration
 
 //data class UserInfo(var timeEntries: List<TimeEntry>,
 //                    var projects: List<Project>)
@@ -28,11 +27,11 @@ class UserInfo(val json: JSONObject){
         val timeEntriesArray = json.getJSONObject("data").getJSONArray("time_entries")
         for (i in 0..(timeEntriesArray.length()-1)){
             val timeEntry = timeEntriesArray.getJSONObject(i)
-            var timeEntryColor = Color.BLACK
+            var timeEntryProject: Project? = null
             if(timeEntry.has("pid")){
-                timeEntryColor = projectsMap[timeEntry.getString("pid")]!!.color
+                timeEntryProject = projectsMap[timeEntry.getString("pid")]!!
             }
-            timeEntries.add(TimeEntry(timeEntry, timeEntryColor))
+            timeEntries.add(TimeEntry(timeEntry, timeEntryProject))
         }
     }
 
@@ -44,7 +43,7 @@ class Project(val json: JSONObject){
     val color: Int = Color.parseColor(json.getString("hex_color"))
 }
 
-class TimeEntry(val json: JSONObject, val projectColor: Int): Comparable<TimeEntry>{
+class TimeEntry(val json: JSONObject, val project: Project?): Comparable<TimeEntry>{
     var durationSeconds: Long = json.getString("duration").toLong()
     var startTimeEpoch: Long = convertStringToInstant(json.getString("start")).epochSecond
     val isCurrentlyRunning: Boolean = !json.has("stop")
@@ -54,12 +53,21 @@ class TimeEntry(val json: JSONObject, val projectColor: Int): Comparable<TimeEnt
             endTimeEpoch = startTimeEpoch + durationSeconds
         }
     }
-
+    var projectColor: Int = Color.BLACK
+    var projectName: String = "Uncategorized"
+    init {
+        if(project!=null){
+            projectColor = project.color
+            projectName = project.name
+        }
+    }
 
     override operator fun compareTo(other: TimeEntry): Int {
         if (this.startTimeEpoch > other.startTimeEpoch) return 1
         if (this.startTimeEpoch < other.startTimeEpoch) return -1
         return 0
     }
+
+
 }
 

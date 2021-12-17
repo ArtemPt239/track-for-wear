@@ -22,14 +22,11 @@ import java.time.Instant
 import android.preference.PreferenceManager
 
 import android.content.SharedPreferences
+import org.json.JSONObject
 
 
-
-
-
-
-const val TILE_FRESHNESS_INTERVAL_MILLISECONDS: Long = 15 * 60 * 1000 // 15 minutes
-private val TRACKED_DURATION_SECONDS: Long = 8*60*60
+const val TILE_FRESHNESS_INTERVAL_MILLISECONDS: Long = 5 * 60 * 1000 // 5 minutes
+private val TRACKED_DURATION_SECONDS: Long = 8 * 60 * 60
 
 // dimensions
 private val PROGRESS_BAR_THICKNESS = dp(12f)
@@ -47,8 +44,9 @@ private const val ID_CLICK_START_RUN = "click_start_run"
 
 
 private val RESOURCES_VERSION = "1"
+
 class ProgressTileService : TileService() {
-//    override fun onTileRequest(requestParams: RequestBuilders.TileRequest) =
+    //    override fun onTileRequest(requestParams: RequestBuilders.TileRequest) =
 //        Futures.immediateFuture(
 //            Tile.Builder()
 //            .setResourcesVersion(RESOURCES_VERSION)
@@ -73,7 +71,24 @@ class ProgressTileService : TileService() {
 
         val sharedPref = getSharedPref(applicationContext)
         var togglAPIToken: String = sharedPref.getString(API_TOKEN_KEY, null)!!
-        val timeEntries = UserInfo(TooglWebAPI(togglAPIToken).getUserData()!!).timeEntries
+        val tooglWebAPI = TooglWebAPI(togglAPIToken)
+        val userInfo = UserInfo(tooglWebAPI.getUserData()!!)
+        val timeEntries = userInfo.timeEntries
+        val runningTimeEntryJSONObject = tooglWebAPI.getCurrentTimeEntry()
+        var runningTimeEntry: TimeEntry? = null
+        if (runningTimeEntryJSONObject != null
+            && runningTimeEntryJSONObject.has("data")
+            && runningTimeEntryJSONObject["data"] is JSONObject){
+                val data = runningTimeEntryJSONObject.getJSONObject("data")
+            runningTimeEntry = if (data.has("pid")) {
+                TimeEntry(
+                    data,
+                    userInfo.projectsMap[data.getString("pid")]
+                )
+            } else {
+                TimeEntry(data, null)
+            }
+        }
         // Creates Tile.
         Tile.Builder()
             // If there are any graphics/images defined in the Tile's layout, the system will
@@ -90,7 +105,7 @@ class ProgressTileService : TileService() {
                                     .setRoot(
 //                                        Text.Builder().setText("Hello, tiled world!").build()
                                         // Creates the root [Box] [LayoutElement]
-                                        layout(timeEntries, deviceParams)
+                                        layout(timeEntries, runningTimeEntry,  deviceParams)
                                     )
                                     .build()
                             )
@@ -103,17 +118,18 @@ class ProgressTileService : TileService() {
     override fun onResourcesRequest(requestParams: RequestBuilders.ResourcesRequest) =
         Futures.immediateFuture(
             Resources.Builder()
-            .setVersion(RESOURCES_VERSION)
-            .addIdToImageMapping("image_inline", ImageResource.Builder()
-                .setInlineResource(
-                    ResourceBuilders.InlineImageResource.Builder()
-                    .setData(byteArrayOfInts(0x00, 0xFF, 0xFF, 0x00))
-                    .setWidthPx(2)
-                    .setHeightPx(2)
-                    .setFormat(ResourceBuilders.IMAGE_FORMAT_RGB_565)
-                    .build()
+                .setVersion(RESOURCES_VERSION)
+                .addIdToImageMapping(
+                    "image_inline", ImageResource.Builder()
+                        .setInlineResource(
+                            ResourceBuilders.InlineImageResource.Builder()
+                                .setData(byteArrayOfInts(0x00, 0xFF, 0xFF, 0x00))
+                                .setWidthPx(2)
+                                .setHeightPx(2)
+                                .setFormat(ResourceBuilders.IMAGE_FORMAT_RGB_565)
+                                .build()
+                        ).build()
                 ).build()
-            ).build()
         )
 
     fun byteArrayOfInts(vararg ints: Int) = ByteArray(ints.size) { pos -> ints[pos].toByte() }
@@ -122,26 +138,46 @@ class ProgressTileService : TileService() {
     // Creates a simple [Box] container that lays out its children one over the other. In our
     // case, an [Arc] that shows progress on top of a [Column] that includes the current steps
     // [Text], the total steps [Text], a [Spacer], and a running icon [Image].
-    private fun layout(timeEntries: List<TimeEntry>, deviceParameters: DeviceParametersBuilders.DeviceParameters) =
+    private fun layout(
+        timeEntries: List<TimeEntry>,
+        runningTimeEntry: TimeEntry?,
+        deviceParameters: DeviceParametersBuilders.DeviceParameters
+    ) =
         LayoutElementBuilders.Box.Builder()
             // Sets width and height to expand and take up entire Tile space.
             .setWidth(expand())
             .setHeight(expand())
 
             // Adds an [Arc] via local function.
-            .addContent(getTimelineArc(timeEntries, trackedDurationSeconds = TRACKED_DURATION_SECONDS, thickness = PROGRESS_BAR_THICKNESS, totalArcLengthDegrees = ARC_TOTAL_DEGREES))
+            .addContent(
+                getTimelineArc(
+                    timeEntries,
+                    trackedDurationSeconds = TRACKED_DURATION_SECONDS,
+                    thickness = PROGRESS_BAR_THICKNESS,
+                    totalArcLengthDegrees = ARC_TOTAL_DEGREES
+                )
+            )
 
             // TODO: Add Column containing the rest of the data.
-            // TODO: START REPLACE THIS LATER
+            // Adds a [Column] containing the two [Text] objects, a [Spacer], and a [Image].
             .addContent(
-                Text.Builder()
-                    .setText("REPLACE")
-                    .setFontStyle(LayoutElementBuilders.FontStyles.display3(deviceParameters).build())
+                Column.Builder()
+                    // Adds a [Text] via local function.
+                    .addContent(
+                        runningEntryNameText(
+                            runningTimeEntry,
+                            deviceParameters
+                        )
+                    ).addContent(
+                        runningEntryDurationText(
+                            runningTimeEntry,
+                            deviceParameters
+                        )
+                    )
+                    // TODO: Add Spacer and Image representations of our step graphic.
+                    // DO LATER
                     .build()
-            )
-            // TODO: END REPLACE THIS LATER
-
-            .build()
+            ).build()
 
 
     // Creates an [Arc] representing current progress towards steps goal.
@@ -168,6 +204,7 @@ class ProgressTileService : TileService() {
         } else {
             inputStartEpoch
         }
+
         fun getActualEndEpoch(inputEndEpoch: Long): Long = if (endEpoch > inputEndEpoch) {
             inputEndEpoch
         } else {
@@ -185,12 +222,13 @@ class ProgressTileService : TileService() {
         var previousEntryEndTimeEpoch: Long = startEpoch
         for (i in 0..(sortedTimeEmtries.size - 1)) {
             val timeEntry = sortedTimeEmtries[i]
-            if(timeEntry.isCurrentlyRunning){
+            if (timeEntry.isCurrentlyRunning) {
                 timeEntry.endTimeEpoch = epochNow
             }
             if ((timeEntry.startTimeEpoch >= startEpoch && timeEntry.endTimeEpoch!! <= endEpoch) ||
                 (timeEntry.startTimeEpoch < startEpoch && timeEntry.endTimeEpoch!! > startEpoch) ||
-                (timeEntry.startTimeEpoch < endEpoch && timeEntry.endTimeEpoch!! > endEpoch)    ){
+                (timeEntry.startTimeEpoch < endEpoch && timeEntry.endTimeEpoch!! > endEpoch)
+            ) {
                 var actualStartEpoch = getActualStartEpoch(timeEntry.startTimeEpoch)
                 if (actualStartEpoch > previousEntryEndTimeEpoch) {
                     // Adding filler ArcLine
@@ -217,7 +255,7 @@ class ProgressTileService : TileService() {
                     if (nextEntry.startTimeEpoch < actualEndEpoch) {
                         actualEndEpoch = nextEntry.startTimeEpoch
                     }
-                }else{
+                } else {
                     val debug = 0
                 }
                 builder.addContent(
@@ -237,11 +275,69 @@ class ProgressTileService : TileService() {
             }
         }
 
-        // Element will start at 12 o'clock or 0 degree position in the circle.
-
-
         return builder.build()
     }
 
 
+    // Creates a [Text]
+    private fun runningEntryNameText(
+        runningTimeEntry: TimeEntry?,
+        deviceParameters: DeviceParametersBuilders.DeviceParameters
+    ): Text {
+
+//        val m = ModifiersBuilders.Modifiers.Builder()
+//            .setBorder(
+//                ModifiersBuilders.Border.Builder()
+//                    .setWidth(dp(6f))
+//                    .setColor(argb(Color.BLUE))
+//                    .build()
+//            ).setPadding(
+//                ModifiersBuilders.Padding.Builder()
+//                    .setAll(dp(6f))
+//                    .build()
+//            ).setSemantics(ModifiersBuilders.Semantics.Builder()
+//                .setContentDescription("str")
+//                .build()
+//            ).build()
+        if (runningTimeEntry != null) {
+            return Text.Builder()
+                .setText(runningTimeEntry.projectName)
+                .setFontStyle(
+                    FontStyles.title3(deviceParameters)
+                        .setColor(argb(runningTimeEntry.projectColor))
+                        .build()
+                )//.setModifiers(m)
+                .build()
+        } else {
+            return Text.Builder()
+                .setText(resources.getString(R.string.no_current_timer))
+                .setFontStyle(FontStyles.title3(deviceParameters).build())
+                .build()
+        }
+    }
+
+
+    private fun runningEntryDurationText(
+        runningTimeEntry: TimeEntry?,
+        deviceParameters: DeviceParametersBuilders.DeviceParameters
+    ): Text {
+
+        if (runningTimeEntry != null) {
+            return Text.Builder()
+                .setText(durationSecondsToString(Instant.now().epochSecond - runningTimeEntry.startTimeEpoch))
+                .setFontStyle(
+                    FontStyles.title3(deviceParameters)
+                        .setColor(argb(runningTimeEntry.projectColor))
+                        .build()
+                )//.setModifiers(m)
+                .build()
+        } else {
+            return Text.Builder()
+                .setText("")
+                .setFontStyle(FontStyles.title3(deviceParameters).build())
+                .build()
+        }
+    }
 }
+
+

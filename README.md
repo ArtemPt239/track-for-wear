@@ -12,11 +12,13 @@ Current features:
 
 - Tile with the following functionality:
 
-    - Ability to see your resent timeline for a quick review of your day
+    - Currently running timer
+
+    - Resent timeline for a quick review of your day
     
 Planned features:
 
-- Ability to see current timer on the tile
+- Ability to see currently running timer from complications
 
 - Ability to start timers from the complications?
 

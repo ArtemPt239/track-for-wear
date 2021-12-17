@@ -15,3 +15,11 @@ fun getSharedPref(applicationContext : Context): SharedPreferences {
         applicationContext
     )!!
 }
+
+fun durationSecondsToString(durationSeconds:Long): String{
+    val hours = durationSeconds / 3600;
+    val minutes = (durationSeconds % 3600) / 60;
+    val seconds = durationSeconds % 60;
+
+    return String.format("%d:%02d:%02d", hours, minutes, seconds);
+}

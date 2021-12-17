@@ -37,4 +37,6 @@ This app targets api level 28 (Android 9/WearOS 2.2) and above
 # Installation
 Hope you have Android studio installed))))))
 
-Or i heard that people use apps like this: https://play.google.com/store/apps/details?id=de.agondev.easyfiretools (this option is not tested by me)
+Alternatively, i heard that people use apps like this: https://play.google.com/store/apps/details?id=de.agondev.easyfiretools (this option is not tested by me)
+
+Finally, you can wait till i finish development and publish the app. 

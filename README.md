@@ -3,6 +3,12 @@ Toggl Track is a great time tracking service! It's a shame though, there are no 
 
 This project aims to fix this!
 
+# Screenshots
+
+![image](pictures/pic_0.png)
+
+![image](pictures/pic_1.png)
+
 # Disclaimer
 This project is still in development.
 

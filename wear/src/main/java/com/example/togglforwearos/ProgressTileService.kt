@@ -26,7 +26,7 @@ import org.json.JSONObject
 
 
 const val TILE_FRESHNESS_INTERVAL_MILLISECONDS: Long = 5 * 60 * 1000 // 5 minutes
-private val TRACKED_DURATION_SECONDS: Long = 8 * 60 * 60
+private val TRACKED_DURATION_SECONDS: Long = 24 * 60 * 60
 
 // dimensions
 private val PROGRESS_BAR_THICKNESS = dp(12f)

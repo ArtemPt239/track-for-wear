@@ -63,39 +63,91 @@ class ProgressTileService : TileService() {
     // For coroutines, use a custom scope we can cancel when the service is destroyed
     private val serviceScope = CoroutineScope(Dispatchers.IO)
 
-
     override fun onTileRequest(requestParams: RequestBuilders.TileRequest) = serviceScope.future {
 
         // Retrieves device parameters to later retrieve font styles for any text in the Tile.
         val deviceParams = requestParams.deviceParameters!!
 
         val sharedPref = getSharedPref(applicationContext)
-        var togglAPIToken: String = sharedPref.getString(API_TOKEN_KEY, null)!!
-        val tooglWebAPI = TooglWebAPI(togglAPIToken)
-        val userInfo = UserInfo(tooglWebAPI.getUserData()!!)
-        val timeEntries = userInfo.timeEntries
-        val runningTimeEntryJSONObject = tooglWebAPI.getCurrentTimeEntry()
-        var runningTimeEntry: TimeEntry? = null
-        if (runningTimeEntryJSONObject != null
-            && runningTimeEntryJSONObject.has("data")
-            && runningTimeEntryJSONObject["data"] is JSONObject){
-                val data = runningTimeEntryJSONObject.getJSONObject("data")
-            runningTimeEntry = if (data.has("pid")) {
-                TimeEntry(
-                    data,
-                    userInfo.projectsMap[data.getString("pid")]
-                )
-            } else {
-                TimeEntry(data, null)
+
+        var tileBuilder: Tile.Builder
+        try {
+
+            var togglAPIToken: String = sharedPref.getString(API_TOKEN_KEY, null)!!
+
+            try {
+                val tooglWebAPI = TooglWebAPI(togglAPIToken)
+                val userInfo = UserInfo(tooglWebAPI.getUserData()!!)
+                val timeEntries = userInfo.timeEntries
+                val runningTimeEntryJSONObject = tooglWebAPI.getCurrentTimeEntry()
+                var runningTimeEntry: TimeEntry? = null
+                if (runningTimeEntryJSONObject != null
+                    && runningTimeEntryJSONObject.has("data")
+                    && runningTimeEntryJSONObject["data"] is JSONObject
+                ) {
+                    val data = runningTimeEntryJSONObject.getJSONObject("data")
+                    runningTimeEntry = if (data.has("pid")) {
+                        TimeEntry(
+                            data,
+                            userInfo.projectsMap[data.getString("pid")]
+                        )
+                    } else {
+                        TimeEntry(data, null)
+                    }
+                }
+                // Creates Tile.
+                tileBuilder = Tile.Builder()
+                    // If there are any graphics/images defined in the Tile's layout, the system will
+                    // retrieve them via onResourcesRequest() and match them with this version number.
+                    .setResourcesVersion(RESOURCES_VERSION)
+                    .setFreshnessIntervalMillis(TILE_FRESHNESS_INTERVAL_MILLISECONDS)
+                    // Creates a timeline to hold one or more tile entries for a specific time periods.
+                    .setTimeline(
+                        Timeline.Builder()
+                            .addTimelineEntry(
+                                TimelineEntry.Builder()
+                                    .setLayout(
+                                        Layout.Builder()
+                                            .setRoot(
+//                                        Text.Builder().setText("Hello, tiled world!").build()
+                                                // Creates the root [Box] [LayoutElement]
+                                                layout(timeEntries, runningTimeEntry, deviceParams)
+                                            )
+                                            .build()
+                                    )
+                                    .build()
+                            )
+                            .build()
+                    )
+            } catch (e: Exception) {
+
+                var errorMsg: String? = e.localizedMessage
+                if (errorMsg == null) {
+                    errorMsg = e.toString()
+                    if (errorMsg == "") {
+                        errorMsg = "Unknown Error"
+                    }
+                }
+                tileBuilder = errorMessageTileBuilder(errorMsg, requestParams)
+                e.printStackTrace()
             }
+        } catch (e: NullPointerException) {
+            tileBuilder = errorMessageTileBuilder("no API token given", requestParams)
+            e.printStackTrace()
         }
-        // Creates Tile.
-        Tile.Builder()
-            // If there are any graphics/images defined in the Tile's layout, the system will
-            // retrieve them via onResourcesRequest() and match them with this version number.
+
+        tileBuilder.build()
+//        errorMessageTileBuilder("If u see me, dev screwed up", requestParams).build()
+
+    }
+
+    fun errorMessageTileBuilder(
+        errorMessage: String,
+        requestParams: RequestBuilders.TileRequest
+    ): Tile.Builder {
+        return Tile.Builder()
             .setResourcesVersion(RESOURCES_VERSION)
             .setFreshnessIntervalMillis(TILE_FRESHNESS_INTERVAL_MILLISECONDS)
-            // Creates a timeline to hold one or more tile entries for a specific time periods.
             .setTimeline(
                 Timeline.Builder()
                     .addTimelineEntry(
@@ -103,16 +155,14 @@ class ProgressTileService : TileService() {
                             .setLayout(
                                 Layout.Builder()
                                     .setRoot(
-//                                        Text.Builder().setText("Hello, tiled world!").build()
-                                        // Creates the root [Box] [LayoutElement]
-                                        layout(timeEntries, runningTimeEntry,  deviceParams)
+                                        Text.Builder().setText(errorMessage).build()
                                     )
                                     .build()
                             )
                             .build()
                     )
                     .build()
-            ).build()
+            )
     }
 
     override fun onResourcesRequest(requestParams: RequestBuilders.ResourcesRequest) =
@@ -199,11 +249,12 @@ class ProgressTileService : TileService() {
         fun sceondsToDegrees(seconds: Long): Float =
             (seconds.toDouble() / trackedDurationSeconds.toDouble() * totalArcLengthDegrees).toFloat()
 
-        fun getActualStartEpoch(inputStartEpoch: Long): Long = if (startEpoch > inputStartEpoch) {
-            startEpoch
-        } else {
-            inputStartEpoch
-        }
+        fun getActualStartEpoch(inputStartEpoch: Long): Long =
+            if (startEpoch > inputStartEpoch) {
+                startEpoch
+            } else {
+                inputStartEpoch
+            }
 
         fun getActualEndEpoch(inputEndEpoch: Long): Long = if (endEpoch > inputEndEpoch) {
             inputEndEpoch

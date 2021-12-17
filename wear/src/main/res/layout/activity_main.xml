@@ -31,7 +31,7 @@
                     android:layout_height="wrap_content"
                     android:background="#B12C2C"
                     android:gravity="center"
-                    android:text="@string/hello_world"
+                    android:text="@string/enter_api_token"
                     android:textAppearance="@android:style/TextAppearance.Material.Medium" />
 
                 <View

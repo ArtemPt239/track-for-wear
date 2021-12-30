@@ -76,7 +76,7 @@ class ProgressTileService : TileService() {
             var togglAPIToken: String = sharedPref.getString(API_TOKEN_KEY, null)!!
 
             try {
-                val tooglWebAPI = TooglWebAPI(togglAPIToken)
+                val tooglWebAPI = debresponsiveToToastTogglWebAPI(togglAPIToken, applicationContext)
                 val userInfo = UserInfo(tooglWebAPI.getUserData()!!)
                 val timeEntries = userInfo.timeEntries
                 val runningTimeEntryJSONObject = tooglWebAPI.getCurrentTimeEntry()
@@ -109,7 +109,6 @@ class ProgressTileService : TileService() {
                                     .setLayout(
                                         Layout.Builder()
                                             .setRoot(
-//                                        Text.Builder().setText("Hello, tiled world!").build()
                                                 // Creates the root [Box] [LayoutElement]
                                                 layout(timeEntries, runningTimeEntry, deviceParams)
                                             )
@@ -119,16 +118,10 @@ class ProgressTileService : TileService() {
                             )
                             .build()
                     )
+            } catch (e: TooglWebAPI.WrongHttpResponseException) {
+                tileBuilder = errorMessageTileBuilder(makeMyExceptionMessage(e), requestParams)
             } catch (e: Exception) {
-
-                var errorMsg: String? = e.localizedMessage
-                if (errorMsg == null) {
-                    errorMsg = e.toString()
-                    if (errorMsg == "") {
-                        errorMsg = "Unknown Error"
-                    }
-                }
-                tileBuilder = errorMessageTileBuilder(errorMsg, requestParams)
+                tileBuilder = errorMessageTileBuilder(makeMyExceptionMessage(e), requestParams)
                 e.printStackTrace()
             }
         } catch (e: NullPointerException) {
@@ -136,10 +129,13 @@ class ProgressTileService : TileService() {
             e.printStackTrace()
         }
 
+
         tileBuilder.build()
 //        errorMessageTileBuilder("If u see me, dev screwed up", requestParams).build()
 
     }
+
+
 
     fun errorMessageTileBuilder(
         errorMessage: String,
@@ -155,13 +151,27 @@ class ProgressTileService : TileService() {
                             .setLayout(
                                 Layout.Builder()
                                     .setRoot(
-                                        Text.Builder().setText(errorMessage).build()
-                                    )
-                                    .build()
-                            )
-                            .build()
-                    )
-                    .build()
+                                        LayoutElementBuilders.Box.Builder()
+                                            .setWidth(expand())
+                                            .setHeight(expand())
+                                            .addContent(
+                                                Text.Builder()
+                                                    .setText(errorMessage)
+                                                    .setMaxLines(5)
+                                                    .build()
+                                            )
+                                            .setModifiers(
+                                                ModifiersBuilders.Modifiers.Builder()
+                                                    .setClickable(
+                                                        ModifiersBuilders.Clickable.Builder()
+                                                            .setId("clickableId")
+                                                            .setOnClick(ActionBuilders.LoadAction.Builder().build())
+                                                            .build()
+                                                    ).build()
+                                            ).build()
+                                    ).build()
+                            ).build()
+                    ).build()
             )
     }
 
@@ -206,6 +216,16 @@ class ProgressTileService : TileService() {
                     thickness = PROGRESS_BAR_THICKNESS,
                     totalArcLengthDegrees = ARC_TOTAL_DEGREES
                 )
+            )
+            // Make tile refreshable
+            .setModifiers(
+                ModifiersBuilders.Modifiers.Builder()
+                    .setClickable(
+                        ModifiersBuilders.Clickable.Builder()
+                            .setId("clickableId")
+                            .setOnClick(ActionBuilders.LoadAction.Builder().build())
+                            .build()
+                    ).build()
             )
 
             // TODO: Add Column containing the rest of the data.

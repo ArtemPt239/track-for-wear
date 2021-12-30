@@ -13,10 +13,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import com.example.togglforwearos.databinding.ActivityMainBinding
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.json.JSONException
 import org.json.JSONObject
 import java.time.Duration
@@ -58,89 +55,77 @@ class MainActivity : Activity() {
 
         buttonAPIToken.setOnClickListener {
             togglAPIToken = editTextAPIToken.text.toString()
-            with (sharedPref.edit()) {
+            with(sharedPref.edit()) {
                 putString(API_TOKEN_KEY, togglAPIToken)
                 apply()
             }
-            if(userInfo != null){
-                textView.text = userInfo!!.projects[0].name
-            }
         }
 
-        getAndStoreUserData(togglAPIToken)
+        scope.launch() {
+            try {
+                getAndStoreUserData(togglAPIToken)
 
+                if (togglAPIToken != null && userInfo != null) {
 
-        if(togglAPIToken != null && userInfo != null) {
-            scope.launch {
-                val tooglWebAPI = TooglWebAPI(togglAPIToken!!)
-                val runningTimeEntry = tooglWebAPI.getCurrentTimeEntry()
-                try {
-                    val currentProject =
-                        userInfo!!.projectsMap[runningTimeEntry?.getJSONObject("data")
-                            ?.getString("pid")]
-                    if (currentProject != null) {
-                        val runningTimeEntry = TimeEntry(runningTimeEntry!!.getJSONObject("data"), currentProject)
+                    val tooglWebAPI = responsiveToToastTogglWebAPI(togglAPIToken!!, applicationContext)
+                    val runningTimeEntry = tooglWebAPI.getCurrentTimeEntry()
+                    try {
+                        val currentProject =
+                            userInfo!!.projectsMap[runningTimeEntry?.getJSONObject("data")
+                                ?.getString("pid")]
+                        if (currentProject != null) {
+                            val runningTimeEntry =
+                                TimeEntry(
+                                    runningTimeEntry!!.getJSONObject("data"),
+                                    currentProject
+                                )
 
-                        textView.text = "${runningTimeEntry.projectName} ${durationSecondsToString(Instant.now().epochSecond - runningTimeEntry.startTimeEpoch)}"
-                        textView.setBackgroundColor(currentProject.color)
+                            textView.text =
+                                "${runningTimeEntry.projectName} ${
+                                    durationSecondsToString(
+                                        Instant.now().epochSecond - runningTimeEntry.startTimeEpoch
+                                    )
+                                }"
+                            textView.setBackgroundColor(currentProject.color)
+                        }
+                    } catch (e: JSONException) {
+                        textView.text = resources.getString(R.string.no_current_timer)
+                        textView.setBackgroundColor(Color.BLACK)
                     }
-                }catch (e: JSONException){
-                    textView.text = resources.getString(R.string.no_current_timer)
-                    textView.setBackgroundColor(Color.BLACK)
+
                 }
+            } catch (e: TooglWebAPI.WrongHttpResponseException) {
+                textView.text = makeMyExceptionMessage(e)
+                textView.setBackgroundColor(Color.BLACK)
+                e.printStackTrace()
             }
         }
 
+
     }
 
 
-    fun convertDurationToString(indiff: Duration): String{
-        var diff = indiff
-        fun getSubstringBetween(string: String, start: String, end: String): String{
-            return string.split(start)[1].split(end)[0]
-        }
-        val days = diff.toDays()
-        diff = diff.minusDays(days)
-        val hours = diff.toHours()
-        diff = diff.minusHours(hours)
-        val minutes = diff.toMinutes()
-        diff = diff.minusMinutes(minutes)
-        var seconds = getSubstringBetween(diff.toString(), "PT", ".")
-        if (seconds.length == 1){
-            seconds = "0$seconds"
-        }
-        return if(diff.toHours() == 0L){
-            "$minutes:$seconds"
-        }else{
-            "$hours:$minutes:$seconds"
-        }
-    }
 
 
     //
-    fun getAndStoreUserData(togglAPIToken: String?){
+    fun getAndStoreUserData(togglAPIToken: String?) {
         val sharedPref = getSharedPref(applicationContext)
         var userInfoString: String? = sharedPref.getString(USER_INFO_KEY, null)
-        if(userInfoString != null){
+        if (userInfoString != null) {
             userInfo = UserInfo(JSONObject(userInfoString))
         }
 
         scope.launch {
-            if(togglAPIToken != null) {
-                val newUserInfoJSONObject = TooglWebAPI(togglAPIToken).getUserData()
-                if(newUserInfoJSONObject != null && newUserInfoJSONObject.toString() != userInfoString){
+            if (togglAPIToken != null) {
+                val newUserInfoJSONObject = responsiveToToastTogglWebAPI(togglAPIToken, applicationContext).getUserData()
+                if (newUserInfoJSONObject != null && newUserInfoJSONObject.toString() != userInfoString) {
                     userInfo = UserInfo(newUserInfoJSONObject)
-                    with (sharedPref.edit()) {
+                    with(sharedPref.edit()) {
                         putString(USER_INFO_KEY, userInfo?.json.toString())
                         apply()
                     }
                 }
             }
         }
-    }
-
-
-    fun showToast(msg: String){
-        Toast.makeText(applicationContext, msg, Toast.LENGTH_SHORT).show()
     }
 }

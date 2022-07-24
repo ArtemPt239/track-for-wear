@@ -12,6 +12,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import com.example.togglforwearos.dataLayer.APITokenRepository
 import com.example.togglforwearos.databinding.ActivityMainBinding
 import kotlinx.coroutines.*
 import org.json.JSONException
@@ -27,11 +28,12 @@ import kotlin.math.min
 
 // Shared preferences keys
 const val API_TOKEN_KEY = "api token key"
-const val USER_INFO_KEY = "user info key"
 
 const val NO_API_TOKEN_STRING = "no apy token here"
 
 class MainActivity : Activity() {
+
+
 
     var userInfo: UserInfo? = null
     val scope = CoroutineScope(Job() + Dispatchers.Main)
@@ -43,31 +45,32 @@ class MainActivity : Activity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val apiTokenRepository = APITokenRepository(applicationContext)
+
         val textView: TextView = findViewById(R.id.textView1)
 
         // Managing API token
         val sharedPref = getSharedPref(applicationContext)
-        var togglAPIToken: String? = sharedPref.getString(API_TOKEN_KEY, null)
 
         val editTextAPIToken: EditText = findViewById(R.id.editTextAPIToken)
-        editTextAPIToken.setText(togglAPIToken)
-        val buttonAPIToken: Button = findViewById(R.id.buttonAPIToken)
+        try {
+            editTextAPIToken.setText(apiTokenRepository.togglAPIToken)
+        }catch(e: APITokenRepository.NoAPITokenFoundException){
+            ;
+        }
 
+
+        val buttonAPIToken: Button = findViewById(R.id.buttonAPIToken)
         buttonAPIToken.setOnClickListener {
-            togglAPIToken = editTextAPIToken.text.toString()
-            with(sharedPref.edit()) {
-                putString(API_TOKEN_KEY, togglAPIToken)
-                apply()
-            }
+            apiTokenRepository.togglAPIToken = editTextAPIToken.text.toString()
         }
 
         scope.launch() {
             try {
-                getAndStoreUserData(togglAPIToken)
+                getAndStoreUserData(apiTokenRepository.togglAPIToken)
 
-                if (togglAPIToken != null && userInfo != null) {
-
-                    val tooglWebAPI = responsiveToToastTogglWebAPI(togglAPIToken!!, applicationContext)
+                if (userInfo != null) {
+                    val tooglWebAPI = responsiveToToastTogglWebAPI(apiTokenRepository.togglAPIToken!!, applicationContext)
                     val runningTimeEntry = tooglWebAPI.getCurrentTimeEntry()
                     try {
                         val currentProject =

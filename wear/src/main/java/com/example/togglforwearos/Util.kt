@@ -12,12 +12,12 @@ fun convertStringToInstant(string: String): Instant {
     return OffsetDateTime.parse(string).toInstant()
 }
 
+
 fun getSharedPref(applicationContext : Context): SharedPreferences {
     return PreferenceManager.getDefaultSharedPreferences(
         applicationContext
     )!!
 }
-
 
 
 fun convertDurationToString(indiff: Duration): String{

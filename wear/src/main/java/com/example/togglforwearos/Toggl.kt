@@ -3,15 +3,10 @@ package com.example.togglforwearos
 import android.graphics.Color
 import org.json.JSONObject
 
-//data class UserInfo(var timeEntries: List<TimeEntry>,
-//                    var projects: List<Project>)
-//
-//data class Project(var id: String, var name: String, var color: Color)
-//
-//data class TimeEntry(var startTimestamp:java.time.Instant,
-//                     var stopTimestamp:java.time.Instant,
-//                     var duration: java.time.Duration,
-//                     var project:Project)
+/**
+ * Classes, used to describe Toggl data and parse its JSON representation
+ */
+
 
 class UserInfo(val json: JSONObject){
     var projectsMap: MutableMap<String, Project> = mutableMapOf()
@@ -36,6 +31,9 @@ class UserInfo(val json: JSONObject){
     }
 
 
+    fun getProjectByPid(pid: String): Project? {
+        return projectsMap[pid]
+    }
 }
 
 class Project(val json: JSONObject){
@@ -54,7 +52,7 @@ class TimeEntry(val json: JSONObject, val project: Project?): Comparable<TimeEnt
         }
     }
     var projectColor: Int = Color.BLACK
-    var projectName: String = "Uncategorized"
+    var projectName: String = "No project"
     init {
         if(project!=null){
             projectColor = project.color
@@ -67,7 +65,5 @@ class TimeEntry(val json: JSONObject, val project: Project?): Comparable<TimeEnt
         if (this.startTimeEpoch < other.startTimeEpoch) return -1
         return 0
     }
-
-
 }
 

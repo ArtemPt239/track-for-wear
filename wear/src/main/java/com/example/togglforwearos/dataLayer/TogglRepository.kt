@@ -24,7 +24,7 @@ const val USER_INFO_KEY = "user info key"
 class TogglRepository(val context: Context) {
 
     private val apiToken = APITokenRepository(context).togglAPIToken
-    val togglWebApi = ToggleWebApi(apiToken)
+    val togglWebApi = TogglWebApi(apiToken)
     var userInfo: UserInfo? = getUserInfoFromStorage()
 
 
@@ -59,7 +59,7 @@ class TogglRepository(val context: Context) {
 
 
     suspend fun getRunningTimer(): TimeEntry {
-        val json = togglWebApi.getRunningTimer()
+        val json = togglWebApi.getRunningTimer().getJSONObject("data")
         return TimeEntry(json, userInfo!!.getProjectByPid(json.getString("pid")))
     }
 
@@ -91,7 +91,7 @@ interface TogglWebApiInterface {
 
 const val BASE_API_URL = "https://api.track.toggl.com/api/v8/"
 
-class ToggleWebApi(val apiToken: String) : TogglWebApiInterface {
+class TogglWebApi(val apiToken: String) : TogglWebApiInterface {
     init {
         if (apiToken.isEmpty()) {
             throw Exception("Api Token <token>${apiToken}</token> is empty or null")
@@ -99,14 +99,10 @@ class ToggleWebApi(val apiToken: String) : TogglWebApiInterface {
     }
 
 
-    override suspend fun getUserInfo(): JSONObject {
-        TODO("Not yet implemented")
-    }
-
     class WrongHttpResponseException(message: String, val code: Int) : IOException(message)
 
     // get User's projects and recent time entries
-    suspend fun getUserData(): JSONObject? {
+    override suspend fun getUserInfo(): JSONObject {
         return fetchJSON(URL(com.example.togglforwearos.BASE_API_URL + "me?with_related_data=true"))
     }
 
@@ -116,11 +112,11 @@ class ToggleWebApi(val apiToken: String) : TogglWebApiInterface {
     }
 
 
-    protected open suspend fun fetchJSON(url: URL): JSONObject {
+    protected suspend fun fetchJSON(url: URL): JSONObject {
         return withContext(Dispatchers.IO) {
             val result = performJSONFetching(url)
             if (result != null) {
-                return@withContext JSONObject()
+                return@withContext result
             } else {
                 throw NullPointerException("Returned JSON is null")
             }

@@ -1,9 +1,7 @@
 package com.example.togglforwearos
 
 
-import android.content.Context
 import android.graphics.Color
-import androidx.core.content.ContextCompat
 import androidx.wear.tiles.*
 import androidx.wear.tiles.ColorBuilders.argb
 import androidx.wear.tiles.DeviceParametersBuilders
@@ -19,9 +17,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.guava.future
 import java.time.Instant
-import android.preference.PreferenceManager
 
-import android.content.SharedPreferences
+import com.example.togglforwearos.dataLayer.APITokenRepository
+import com.example.togglforwearos.dataLayer.TogglRepository
+import com.example.togglforwearos.dataLayer.TogglWebApi
 import org.json.JSONObject
 
 
@@ -71,65 +70,62 @@ class ProgressTileService : TileService() {
         val sharedPref = getSharedPref(applicationContext)
 
         var tileBuilder: Tile.Builder
-        try {
+//        try {
+//
+//            try {
+//                val togglRepository = TogglRepository(applicationContext)
+//                val timeEntries = togglRepository.userInfo!!.timeEntries
+//                val runningTimeEntryJSONObject = tooglWebAPI.getCurrentTimeEntry()
+//                var runningTimeEntry: TimeEntry? = null
+//                if (runningTimeEntryJSONObject != null
+//                    && runningTimeEntryJSONObject.has("data")
+//                    && runningTimeEntryJSONObject["data"] is JSONObject
+//                ) {
+//                    val data = runningTimeEntryJSONObject.getJSONObject("data")
+//                    runningTimeEntry = if (data.has("pid")) {
+//                        TimeEntry(
+//                            data,
+//                            userInfo.projectsMap[data.getString("pid")]
+//                        )
+//                    } else {
+//                        TimeEntry(data, null)
+//                    }
+//                }
+//                // Creates Tile.
+//                tileBuilder = Tile.Builder()
+//                    // If there are any graphics/images defined in the Tile's layout, the system will
+//                    // retrieve them via onResourcesRequest() and match them with this version number.
+//                    .setResourcesVersion(RESOURCES_VERSION)
+//                    .setFreshnessIntervalMillis(TILE_FRESHNESS_INTERVAL_MILLISECONDS)
+//                    // Creates a timeline to hold one or more tile entries for a specific time periods.
+//                    .setTimeline(
+//                        Timeline.Builder()
+//                            .addTimelineEntry(
+//                                TimelineEntry.Builder()
+//                                    .setLayout(
+//                                        Layout.Builder()
+//                                            .setRoot(
+//                                                // Creates the root [Box] [LayoutElement]
+//                                                layout(timeEntries, runningTimeEntry, deviceParams)
+//                                            )
+//                                            .build()
+//                                    )
+//                                    .build()
+//                            )
+//                            .build()
+//                    )
+//            } catch (e: TogglWebApi.WrongHttpResponseException) {
+//                tileBuilder = errorMessageTileBuilder(makeMyExceptionMessage(e), requestParams)
+//            } catch (e: Exception) {
+//                tileBuilder = errorMessageTileBuilder(makeMyExceptionMessage(e), requestParams)
+//                e.printStackTrace()
+//            }
+//        } catch (e: APITokenRepository.NoAPITokenFoundException) {
+//            tileBuilder = errorMessageTileBuilder(makeMyExceptionMessage(e), requestParams)
+//            e.printStackTrace()
+//        }
 
-            var togglAPIToken: String = sharedPref.getString(API_TOKEN_KEY, null)!!
-
-            try {
-                val tooglWebAPI = debresponsiveToToastTogglWebAPI(togglAPIToken, applicationContext)
-                val userInfo = UserInfo(tooglWebAPI.getUserData()!!)
-                val timeEntries = userInfo.timeEntries
-                val runningTimeEntryJSONObject = tooglWebAPI.getCurrentTimeEntry()
-                var runningTimeEntry: TimeEntry? = null
-                if (runningTimeEntryJSONObject != null
-                    && runningTimeEntryJSONObject.has("data")
-                    && runningTimeEntryJSONObject["data"] is JSONObject
-                ) {
-                    val data = runningTimeEntryJSONObject.getJSONObject("data")
-                    runningTimeEntry = if (data.has("pid")) {
-                        TimeEntry(
-                            data,
-                            userInfo.projectsMap[data.getString("pid")]
-                        )
-                    } else {
-                        TimeEntry(data, null)
-                    }
-                }
-                // Creates Tile.
-                tileBuilder = Tile.Builder()
-                    // If there are any graphics/images defined in the Tile's layout, the system will
-                    // retrieve them via onResourcesRequest() and match them with this version number.
-                    .setResourcesVersion(RESOURCES_VERSION)
-                    .setFreshnessIntervalMillis(TILE_FRESHNESS_INTERVAL_MILLISECONDS)
-                    // Creates a timeline to hold one or more tile entries for a specific time periods.
-                    .setTimeline(
-                        Timeline.Builder()
-                            .addTimelineEntry(
-                                TimelineEntry.Builder()
-                                    .setLayout(
-                                        Layout.Builder()
-                                            .setRoot(
-                                                // Creates the root [Box] [LayoutElement]
-                                                layout(timeEntries, runningTimeEntry, deviceParams)
-                                            )
-                                            .build()
-                                    )
-                                    .build()
-                            )
-                            .build()
-                    )
-            } catch (e: TooglWebAPI.WrongHttpResponseException) {
-                tileBuilder = errorMessageTileBuilder(makeMyExceptionMessage(e), requestParams)
-            } catch (e: Exception) {
-                tileBuilder = errorMessageTileBuilder(makeMyExceptionMessage(e), requestParams)
-                e.printStackTrace()
-            }
-        } catch (e: NullPointerException) {
-            tileBuilder = errorMessageTileBuilder("no API token given", requestParams)
-            e.printStackTrace()
-        }
-
-
+        tileBuilder = errorMessageTileBuilder("not implemented", requestParams)
         tileBuilder.build()
 //        errorMessageTileBuilder("If u see me, dev screwed up", requestParams).build()
 

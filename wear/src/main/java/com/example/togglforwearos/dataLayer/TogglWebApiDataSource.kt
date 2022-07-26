@@ -24,7 +24,7 @@ interface TogglWebApiDataSourceInterface {
 }
 
 
-const val BASE_API_URL = "https://api.track.toggl.com/api/v8/"
+const val BASE_API_URL = "https://api.track.toggl.com/api/v9/"
 
 class TogglWebApi(val apiToken: String) : TogglWebApiDataSourceInterface {
     init {

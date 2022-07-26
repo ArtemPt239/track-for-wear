@@ -58,24 +58,25 @@ class MainActivity : Activity() {
                         )
                     textView.setBackgroundColor(runningTimeEntry.projectColor)
 
-//                    val thread: Thread = object : Thread() {
-//                        override fun run() {
-//                            try {
-//                                while (!this.isInterrupted) {
-//                                    sleep(1000)
-//                                    runOnUiThread {
-//                                        textView.text =
-//                                            runningTimeEntry.projectName + " " + durationSecondsToString(
-//                                                Instant.now().epochSecond - runningTimeEntry.startTimeEpoch
-//                                            )
-//                                    }
-//                                }
-//                            } catch (e: InterruptedException) {
-//                            }
-//                        }
-//                    }
-//
-//                    thread.start()
+                    // refresh every second
+                    val thread: Thread = object : Thread() {
+                        override fun run() {
+                            try {
+                                while (!this.isInterrupted) {
+                                    sleep(1000)
+                                    runOnUiThread {
+                                        textView.text =
+                                            runningTimeEntry.projectName + " " + durationSecondsToString(
+                                                Instant.now().epochSecond - runningTimeEntry.startTimeEpoch
+                                            )
+                                    }
+                                }
+                            } catch (e: InterruptedException) {
+                            }
+                        }
+                    }
+
+                    thread.start()
                 } catch (e: JSONException) {
                     textView.text = resources.getString(R.string.no_current_timer)
                     textView.setBackgroundColor(Color.BLACK)

@@ -76,7 +76,7 @@ class ProgressTileService : TileService() {
 //                val togglRepository = TogglRepository(applicationContext)
 //                val timeEntries = togglRepository.userInfo!!.timeEntries
 //                val runningTimeEntryJSONObject = tooglWebAPI.getCurrentTimeEntry()
-//                var runningTimeEntry: TimeEntry? = null
+//                var runningTimeEntry = togglRepository.getRunningTimer()
 //                if (runningTimeEntryJSONObject != null
 //                    && runningTimeEntryJSONObject.has("data")
 //                    && runningTimeEntryJSONObject["data"] is JSONObject

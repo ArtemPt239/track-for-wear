@@ -15,13 +15,13 @@ This project is still in development.
 
 Current features:
 
-- Ability to see currently running timer on your watch.
-
 - Tile with the following functionality:
 
-    - Currently running timer
+    - Currently running timer (tap the tile to refresh)
 
     - Resent timeline for a quick review of your day
+
+- Ability to see currently running timer in the app on your watch.
     
 Planned features:
 

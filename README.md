@@ -19,7 +19,7 @@ Current features:
 
     - Currently running timer (tap the tile to refresh)
 
-    - Resent timeline for a quick review of your day
+    - Recent timeline for a quick review of your day
 
 - Ability to see currently running timer in the app on your watch.
     

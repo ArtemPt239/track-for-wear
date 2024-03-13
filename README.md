@@ -1,3 +1,5 @@
+# Frozen development
+I no longer own a wearOS device and don't see myself returning to this project in the future. You can consider this project **abandoned**. If anyone for some reason wants to use this code, feel free to do so!
 # About
 Toggl Track is a great time tracking service! It's a shame though, there are no app for WearOS.
 
